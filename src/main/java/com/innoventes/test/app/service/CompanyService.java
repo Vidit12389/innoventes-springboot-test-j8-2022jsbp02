@@ -2,8 +2,10 @@ package com.innoventes.test.app.service;
 
 import java.util.List;
 
+import com.innoventes.test.app.dto.CompanyDTO;
 import com.innoventes.test.app.entity.Company;
 import com.innoventes.test.app.exception.ValidationException;
+import org.springframework.web.bind.annotation.PathVariable;
 
 public interface CompanyService {
 
@@ -14,4 +16,7 @@ public interface CompanyService {
 	Company updateCompany(Long id, Company company) throws ValidationException;
 	
 	void deleteCompany(Long id);
+
+	Company getCompanyById(Long id);
+	Company getCompanyByCode(String companyCode);
 }

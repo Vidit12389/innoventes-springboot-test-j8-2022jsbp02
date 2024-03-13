@@ -3,6 +3,7 @@ package com.innoventes.test.app.controller;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -11,14 +12,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.innoventes.test.app.dto.CompanyDTO;
@@ -54,9 +49,28 @@ public class CompanyController {
 		return ResponseEntity.status(HttpStatus.OK).location(location).body(companyDTOList);
 	}
 
+	@GetMapping("/{id}")
+	public ResponseEntity<Company> getCompanyById(@PathVariable Long id){
+		Company companyById = companyService.getCompanyById(id);
+		return ResponseEntity.status(HttpStatus.OK).body(companyById);
+	}
+
+	@GetMapping("/byCode/{companyCode}")
+	public ResponseEntity<Company> getCompanyByCode(@PathVariable String companyCode){
+		Company companyByCode = companyService.getCompanyByCode(companyCode);
+		return ResponseEntity.status(HttpStatus.OK).body(companyByCode);
+	}
+
 	@PostMapping("/companies")
-	public ResponseEntity<CompanyDTO> addCompany(@Valid @RequestBody CompanyDTO companyDTO)
+	public ResponseEntity<?> addCompany(@Valid @RequestBody CompanyDTO companyDTO, BindingResult result)
 			throws ValidationException {
+		if(result.hasErrors()) {
+			List<String> errors = result.getFieldErrors().stream()
+					.map(err -> err.getField() + ": " + err.getDefaultMessage())
+					.collect(Collectors.toList());
+			return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+		}
+
 		Company company = companyMapper.getCompany(companyDTO);
 		Company newCompany = companyService.addCompany(company);
 		CompanyDTO newCompanyDTO = companyMapper.getCompanyDTO(newCompany);
@@ -65,6 +79,7 @@ public class CompanyController {
 				.toUri();
 		return ResponseEntity.created(location).body(newCompanyDTO);
 	}
+
 
 	@PutMapping(value = "/companies/{id}")
 	public ResponseEntity<CompanyDTO> updateCompany(@PathVariable(value = "id") Long id,
@@ -83,8 +98,12 @@ public class CompanyController {
 		return ResponseEntity.noContent().build();
 	}
 
+
 	public String getMessage(String exceptionCode) {
 		return messageSource.getMessage(exceptionCode, null, LocaleContextHolder.getLocale());
 	}
+
+
+
 
 }
